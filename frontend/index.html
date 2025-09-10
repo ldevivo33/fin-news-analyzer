@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial News Sentiment Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000000;
+            height: 100vh;
+            color: #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.03) 40%, rgba(255, 255, 255, 0.03) 60%, transparent 60%);
+            z-index: 0;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 50px;
+            right: 50px;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(-45deg, transparent 40%, rgba(255, 255, 255, 0.02) 40%, rgba(255, 255, 255, 0.02) 60%, transparent 60%);
+            z-index: 0;
+        }
+        
+        .chart-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .chart-line svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .chart-line path {
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        
+        .chart-line .candlestick {
+            fill: rgba(255, 255, 255, 0.06);
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 1;
+        }
+        
+        .chart-line .volume-bar {
+            fill: rgba(255, 255, 255, 0.04);
+        }
+        
+        .container {
+            max-width: 1104px; /* 1200 * 0.92 */
+            margin: 0 auto;
+            padding: 18px; /* 20 * 0.92 */
+            position: relative;
+            z-index: 1;
+            margin-top: 20px; /* Less offset from top */
+            height: calc(100vh - 20px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 46px; /* 50 * 0.92 */
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px 15px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            display: inline-block;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .header h1 {
+            font-size: 3.22rem; /* 3.5 * 0.92 */
+            font-weight: 700;
+            margin-bottom: 14px; /* 15 * 0.92 */
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+        
+        .header p {
+            font-size: 1.196rem; /* 1.3 * 0.92 */
+            opacity: 0.8;
+            font-weight: 400;
+            color: #ffffff;
+        }
+        
+        .main-card {
+            background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 100%);
+            border: 1px solid #404040;
+            border-radius: 18px; /* 20 * 0.92 */
+            padding: 46px; /* 50 * 0.92 */
+            box-shadow: 0 23px 46px rgba(0,0,0,0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            margin-bottom: 37px; /* 40 * 0.92 */
+        }
+        
+        .input-section {
+            margin-bottom: 28px; /* 30 * 0.92 */
+        }
+        
+        .input-group {
+            position: relative;
+            margin-bottom: 18px; /* 20 * 0.92 */
+        }
+        
+        .input-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 11px; /* 12 * 0.92 */
+            color: #ffffff;
+            font-size: 1.104rem; /* 1.2 * 0.92 */
+        }
+        
+        .text-input {
+            width: 100%;
+            padding: 18px 22px; /* 20px 24px * 0.92 */
+            background: #0a0a0a;
+            border: 2px solid #404040;
+            border-radius: 11px; /* 12 * 0.92 */
+            font-size: 1.012rem; /* 1.1 * 0.92 */
+            font-family: inherit;
+            color: #ffffff;
+            transition: all 0.3s ease;
+            resize: vertical;
+            min-height: 129px; /* 140 * 0.92 */
+        }
+        
+        .text-input:focus {
+            outline: none;
+            border-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+            background: #111111;
+        }
+        
+        .text-input::placeholder {
+            color: #666666;
+        }
+        
+        .analyze-btn {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 17px 33px; /* 18px 36px * 0.92 */
+            border-radius: 11px; /* 12 * 0.92 */
+            font-size: 1.104rem; /* 1.2 * 0.92 */
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 11px; /* 12 * 0.92 */
+            margin: 0 auto;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .analyze-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 28px rgba(255, 255, 255, 0.2);
+            background: #f0f0f0;
+        }
+        
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 18px 0; /* 20 * 0.92 */
+        }
+        
+        .spinner {
+            border: 3px solid #404040;
+            border-top: 3px solid #ffffff;
+            border-radius: 50%;
+            width: 28px; /* 30 * 0.92 */
+            height: 28px; /* 30 * 0.92 */
+            animation: spin 1s linear infinite;
+            margin: 0 auto 9px; /* 10 * 0.92 */
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result-section {
+            display: none;
+            margin-top: 28px; /* 30 * 0.92 */
+        }
+        
+        .result-card {
+            background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 100%);
+            border-radius: 15px; /* 16 * 0.92 */
+            padding: 28px; /* 30 * 0.92 */
+            border-left: 4px solid #404040;
+            border: 1px solid #404040;
+        }
+        
+        .result-card.positive {
+            border-left-color: #00ff88;
+            border-color: #00ff88;
+            background: linear-gradient(145deg, #0a1a0a 0%, #1a2d1a 100%);
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.3);
+        }
+        
+        .result-card.negative {
+            border-left-color: #ff4444;
+            border-color: #ff4444;
+            background: linear-gradient(145deg, #1a0a0a 0%, #2d1a1a 100%);
+            box-shadow: 0 0 25px rgba(255, 68, 68, 0.3);
+        }
+        
+        .result-card.neutral {
+            border-left-color: #ffffff;
+            border-color: #ffffff;
+            background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 100%);
+            box-shadow: 0 0 18px rgba(255, 255, 255, 0.1);
+        }
+        
+        .sentiment-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px; /* 8 * 0.92 */
+            padding: 7px 15px; /* 8px 16px * 0.92 */
+            border-radius: 18px; /* 20 * 0.92 */
+            font-weight: 600;
+            font-size: 0.828rem; /* 0.9 * 0.92 */
+            margin-bottom: 15px; /* 16 * 0.92 */
+        }
+        
+        .sentiment-badge.positive {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: #000000;
+            font-weight: 700;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+        }
+        
+        .sentiment-badge.negative {
+            background: linear-gradient(135deg, #ff4444 0%, #cc3333 100%);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
+        }
+        
+        .sentiment-badge.neutral {
+            background: #ffffff;
+            color: #000000;
+            font-weight: 700;
+        }
+        
+        .commentary {
+            color: #ffffff;
+            line-height: 1.6;
+            font-size: 1.012rem; /* 1.1 * 0.92 */
+            font-weight: 400;
+        }
+        
+        
+        .footer {
+            text-align: center;
+            color: #ffffff;
+            opacity: 0.8;
+            margin-top: 55px; /* 60 * 0.92 */
+            font-size: 0.828rem; /* 0.9 * 0.92 */
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.3rem; /* 2.5 * 0.92 */
+            }
+            
+            .main-card {
+                padding: 28px 18px; /* 30px 20px * 0.92 */
+                margin: 0 9px; /* 10 * 0.92 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Stock Chart Line Background -->
+    <div class="chart-line">
+        <svg viewBox="0 0 1200 800" preserveAspectRatio="none">
+            <!-- Main Price Lines -->
+            <path d="M0,720 Q50,700 100,680 Q150,650 200,640 Q250,620 300,600 Q350,580 400,560 Q450,540 500,520 Q550,500 600,480 Q650,460 700,440 Q750,420 800,400 Q850,380 900,360 Q950,340 1000,320 Q1050,300 1100,280 Q1150,260 1200,240" />
+            <path d="M0,750 Q50,730 100,710 Q150,680 200,670 Q250,650 300,630 Q350,610 400,590 Q450,570 500,550 Q550,530 600,510 Q650,490 700,470 Q750,450 800,430 Q850,410 900,390 Q950,370 1000,350 Q1050,330 1100,310 Q1150,290 1200,270" />
+            
+            <!-- Candlestick Analysis Elements -->
+            <rect class="candlestick" x="100" y="680" width="8" height="20" rx="2" />
+            <rect class="candlestick" x="200" y="640" width="8" height="25" rx="2" />
+            <rect class="candlestick" x="300" y="600" width="8" height="18" rx="2" />
+            <rect class="candlestick" x="400" y="560" width="8" height="22" rx="2" />
+            <rect class="candlestick" x="500" y="520" width="8" height="16" rx="2" />
+            <rect class="candlestick" x="600" y="480" width="8" height="24" rx="2" />
+            <rect class="candlestick" x="700" y="440" width="8" height="19" rx="2" />
+            <rect class="candlestick" x="800" y="400" width="8" height="21" rx="2" />
+            <rect class="candlestick" x="900" y="360" width="8" height="17" rx="2" />
+            <rect class="candlestick" x="1000" y="320" width="8" height="23" rx="2" />
+            
+            <!-- Volume Bars -->
+            <rect class="volume-bar" x="50" y="750" width="6" height="15" />
+            <rect class="volume-bar" x="150" y="760" width="6" height="12" />
+            <rect class="volume-bar" x="250" y="755" width="6" height="18" />
+            <rect class="volume-bar" x="350" y="745" width="6" height="22" />
+            <rect class="volume-bar" x="450" y="740" width="6" height="16" />
+            <rect class="volume-bar" x="550" y="735" width="6" height="20" />
+            <rect class="volume-bar" x="650" y="730" width="6" height="14" />
+            <rect class="volume-bar" x="750" y="725" width="6" height="19" />
+            <rect class="volume-bar" x="850" y="720" width="6" height="13" />
+            <rect class="volume-bar" x="950" y="715" width="6" height="21" />
+            
+            <!-- Support/Resistance Lines -->
+            <path d="M0,680 L1200,680" stroke="rgba(255, 255, 255, 0.03)" stroke-width="1" stroke-dasharray="5,5" />
+            <path d="M0,400 L1200,400" stroke="rgba(255, 255, 255, 0.03)" stroke-width="1" stroke-dasharray="5,5" />
+            
+            <!-- Moving Average Indicators -->
+            <circle cx="200" cy="640" r="3" fill="rgba(255, 255, 255, 0.1)" />
+            <circle cx="400" cy="560" r="3" fill="rgba(255, 255, 255, 0.1)" />
+            <circle cx="600" cy="480" r="3" fill="rgba(255, 255, 255, 0.1)" />
+            <circle cx="800" cy="400" r="3" fill="rgba(255, 255, 255, 0.1)" />
+            <circle cx="1000" cy="320" r="3" fill="rgba(255, 255, 255, 0.1)" />
+        </svg>
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Financial Sentiment Analyzer</h1>
+            <p>Analyze the sentiment of financial news headlines with AI-powered insights</p>
+        </div>
+        
+        <div class="main-card">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="headline-input" class="input-label">
+                        <i class="fas fa-newspaper"></i> Enter Financial News Headline
+                    </label>
+                    <textarea 
+                        id="headline-input" 
+                        class="text-input" 
+                        placeholder="Enter a financial news headline to analyze its sentiment..."
+                        rows="4"
+                    ></textarea>
+                </div>
+                
+                <button id="analyze-btn" class="analyze-btn">
+                    <i class="fas fa-brain"></i>
+                    Analyze Sentiment
+                </button>
+                
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing sentiment...</p>
+                </div>
+            </div>
+            
+            <div id="result-section" class="result-section">
+                <div id="result-card" class="result-card">
+                    <div id="sentiment-badge" class="sentiment-badge">
+                        <i class="fas fa-circle"></i>
+                        <span id="sentiment-text">Sentiment</span>
+                    </div>
+                    <div id="commentary" class="commentary">
+                        Analysis commentary will appear here...
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div class="footer">
+            <p>Powered by AI • Built with FastAPI & React</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        
+        const headlineInput = document.getElementById('headline-input');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const loading = document.getElementById('loading');
+        const resultSection = document.getElementById('result-section');
+        const resultCard = document.getElementById('result-card');
+        const sentimentBadge = document.getElementById('sentiment-badge');
+        const sentimentText = document.getElementById('sentiment-text');
+        const commentary = document.getElementById('commentary');
+        
+        
+        function showLoading() {
+            loading.style.display = 'block';
+            analyzeBtn.disabled = true;
+            resultSection.style.display = 'none';
+        }
+        
+        function hideLoading() {
+            loading.style.display = 'none';
+            analyzeBtn.disabled = false;
+        }
+        
+        function showResult(sentiment, commentaryText) {
+            // Update sentiment badge
+            sentimentText.textContent = sentiment.charAt(0).toUpperCase() + sentiment.slice(1);
+            sentimentBadge.className = `sentiment-badge ${sentiment}`;
+            
+            // Update commentary
+            commentary.textContent = commentaryText;
+            
+            // Update result card styling
+            resultCard.className = `result-card ${sentiment}`;
+            
+            // Show result section
+            resultSection.style.display = 'block';
+            
+            // Scroll to result
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        async function analyzeSentiment() {
+            const headline = headlineInput.value.trim();
+            
+            if (!headline) {
+                alert('Please enter a headline to analyze');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        headline: headline
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                showResult(data.sentiment, data.commentary);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error analyzing sentiment. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Event listeners
+        analyzeBtn.addEventListener('click', analyzeSentiment);
+        
+        headlineInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                analyzeSentiment();
+            }
+        });
+        
+        // Auto-resize textarea
+        headlineInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    </script>
+</body>
+</html>

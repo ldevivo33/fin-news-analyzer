@@ -1,9 +1,13 @@
 # Import FastAPI and Pydantic modules 
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import uvicorn
 import logging
+import os
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -13,7 +17,18 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Financial News Sentiment Analyzer",
     description="Analyze sentiment of financial news headlines",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url=None,  # Disable Swagger UI
+    redoc_url=None  # Disable ReDoc
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Preload the model at startup
@@ -62,10 +77,19 @@ async def analyze_sentiment(request: HeadlineRequest):
 # Import sentiment analysis function from models.py
 from .models import analyze_headline_sentiment
 
-# Health check endpoint
+# Mount static files for the frontend
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+# Serve the React frontend
 @app.get("/")
-async def root():
-    return {"message": "Financial News Sentiment Analyzer is running!"}
+async def serve_frontend():
+    """Serve the React frontend."""
+    return FileResponse("frontend/index.html")
+
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"message": "Financial News Sentiment Analyzer is running!", "status": "healthy"}
 
 # Run the application
 if __name__ == "__main__":
