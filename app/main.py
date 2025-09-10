@@ -3,6 +3,11 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import uvicorn
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app instance
 app = FastAPI(
@@ -10,6 +15,19 @@ app = FastAPI(
     description="Analyze sentiment of financial news headlines",
     version="1.0.0"
 )
+
+# Preload the model at startup
+@app.on_event("startup")
+async def startup_event():
+    """Preload the sentiment analysis model at startup."""
+    logger.info("Starting up Financial News Sentiment Analyzer...")
+    try:
+        from .models import get_analyzer
+        analyzer = get_analyzer()
+        logger.info("Model preloaded successfully!")
+    except Exception as e:
+        logger.error(f"Failed to preload model: {e}")
+        logger.info("App will use fallback analysis if needed.")
 
 #Import Pydantic models from schema.py
 from .schema import HeadlineRequest, SentimentResponse
