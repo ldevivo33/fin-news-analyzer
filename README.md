@@ -18,7 +18,7 @@ A FastAPI-based web service that analyzes the sentiment of financial news headli
 
 2. **Run the application:**
    ```bash
-   python app/main.py
+   uvicorn app.main:app --reload
    ```
 
 3. **Access the API:**
