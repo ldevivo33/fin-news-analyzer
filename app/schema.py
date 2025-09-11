@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
+from datetime import datetime
 
 # Define a Pydantic model for the request body:
 #   - headline: string
@@ -28,3 +29,32 @@ class SentimentResponse(BaseModel):
                 "commentary": "This headline indicates strong positive sentiment with keywords like 'surges' and 'strong earnings'"
             }
         }
+
+
+class HeadlineBase(BaseModel):
+    source: str
+    title: str
+    url: str
+    published_at: Optional[datetime] = None
+    raw_text: Optional[str] = None
+
+
+class HeadlineCreate(HeadlineBase):
+    pass
+
+
+class HeadlineOut(HeadlineBase):
+    id: int
+    sentiment: Optional[str] = None
+    commentary: Optional[str] = None
+    model_confidence: Optional[float] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class HeadlinesResponse(BaseModel):
+    items: List[HeadlineOut]
+    total: int

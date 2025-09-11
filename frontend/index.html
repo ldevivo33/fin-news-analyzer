@@ -16,10 +16,10 @@
         body {
             font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #000000;
-            height: 100vh;
+            min-height: 100vh;
             color: #ffffff;
             position: relative;
-            overflow: hidden;
+            overflow-y: auto;
         }
         
         body::before {
@@ -84,25 +84,12 @@
             position: relative;
             z-index: 1;
             margin-top: 20px; /* Less offset from top */
-            height: calc(100vh - 20px);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
         
         .header {
             text-align: center;
             margin-bottom: 46px; /* 50 * 0.92 */
             color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 20px 15px;
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(10px);
-            display: inline-block;
-            width: fit-content;
-            margin-left: auto;
-            margin-right: auto;
         }
         
         .header h1 {
@@ -303,6 +290,330 @@
             font-size: 0.828rem; /* 0.9 * 0.92 */
         }
         
+        /* New Headlines Management Styles */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #404040;
+        }
+
+        .section-header h2 {
+            font-size: 1.38rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0;
+        }
+
+        .refresh-btn {
+            background: #404040;
+            color: #ffffff;
+            border: 1px solid #666666;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .refresh-btn:hover {
+            background: #555555;
+            border-color: #888888;
+        }
+
+        .add-headline-section {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #404040;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+
+        .add-headline-section h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0 0 18px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #ffffff;
+            font-size: 0.92rem;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0a0a0a;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-family: inherit;
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .form-input.input-error, .form-textarea.input-error, .text-input.input-error {
+            border-color: #ff4444;
+            box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.2);
+        }
+
+        .shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-4px); }
+            40% { transform: translateX(4px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+            100% { transform: translateX(0); }
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #ffffff;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+            background: #111111;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .add-btn {
+            background: #00ff88;
+            color: #000000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-btn:hover {
+            background: #00cc6a;
+            transform: translateY(-2px);
+        }
+
+        .form-error {
+            margin-top: 8px;
+            color: #ff8888;
+            font-size: 0.9rem;
+        }
+
+        .filters-section {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #404040;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+
+        .filters-section h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0 0 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 2fr;
+            gap: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-label {
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #ffffff;
+            font-size: 0.92rem;
+        }
+
+        .filter-select, .filter-input {
+            padding: 10px 12px;
+            background: #0a0a0a;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-family: inherit;
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .filter-select:focus, .filter-input:focus {
+            outline: none;
+            border-color: #ffffff;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+        }
+
+        .headlines-container {
+            min-height: 200px;
+        }
+
+        .headlines-loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #ffffff;
+        }
+
+        .headlines-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666666;
+        }
+
+        .headlines-empty i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .headlines-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .headline-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #404040;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .headline-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: #666666;
+        }
+
+        .headline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .headline-title {
+            font-size: 1.08rem;
+            font-weight: 500;
+            color: #ffffff;
+            margin: 0;
+            line-height: 1.4;
+            flex: 1;
+            margin-right: 16px;
+        }
+
+        .headline-sentiment {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .headline-sentiment.positive {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .headline-sentiment.negative {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+            border: 1px solid rgba(255, 68, 68, 0.3);
+        }
+
+        .headline-sentiment.neutral {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .headline-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: #999999;
+        }
+
+        .headline-source {
+            font-weight: 500;
+            color: #cccccc;
+        }
+
+        .headline-date {
+            color: #999999;
+        }
+
+        .headline-commentary {
+            font-size: 0.92rem;
+            color: #cccccc;
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        .headline-url {
+            margin-top: 12px;
+        }
+
+        .headline-url a {
+            color: #00ff88;
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .headline-url a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2.3rem; /* 2.5 * 0.92 */
@@ -311,6 +622,21 @@
             .main-card {
                 padding: 28px 18px; /* 30px 20px * 0.92 */
                 margin: 0 9px; /* 10 * 0.92 */
+            }
+
+            .form-row, .filter-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .headline-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .headline-title {
+                margin-right: 0;
             }
         }
     </style>
@@ -370,7 +696,7 @@
             <div class="input-section">
                 <div class="input-group">
                     <label for="headline-input" class="input-label">
-                        <i class="fas fa-newspaper"></i> Enter Financial News Headline
+                        <i class="fas fa-newspaper"></i> Experiment With The Model:
                     </label>
                     <textarea 
                         id="headline-input" 
@@ -403,6 +729,77 @@
                 </div>
             </div>
         </div>
+
+        <!-- Headlines Management Section -->
+        <div class="main-card">
+            <div class="section-header">
+                <h2><i class="fas fa-database"></i> Stored Headlines</h2>
+                <button id="refresh-headlines-btn" class="refresh-btn">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+
+            <!-- Add New Headline Form -->
+            <div class="add-headline-section">
+                <h3><i class="fas fa-plus"></i> Add Test Headline</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="source-input" class="form-label">Source</label>
+                        <input type="text" id="source-input" class="form-input" placeholder="e.g., Reuters, CNBC">
+                    </div>
+                    <div class="form-group">
+                        <label for="url-input" class="form-label">URL</label>
+                        <input type="url" id="url-input" class="form-input" placeholder="https://example.com/news">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="new-headline-input" class="form-label">Headline</label>
+                    <textarea id="new-headline-input" class="form-textarea" placeholder="Enter headline to store and analyze..." rows="3"></textarea>
+                </div>
+                <button id="add-headline-btn" class="add-btn">
+                    <i class="fas fa-plus"></i> Add & Analyze
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters-section">
+                <h3><i class="fas fa-filter"></i> Filters</h3>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="source-filter" class="filter-label">Source</label>
+                        <select id="source-filter" class="filter-select">
+                            <option value="">All Sources</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="sentiment-filter" class="filter-label">Sentiment</label>
+                        <select id="sentiment-filter" class="filter-select">
+                            <option value="">All Sentiments</option>
+                            <option value="positive">Positive</option>
+                            <option value="negative">Negative</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="search-filter" class="filter-label">Search</label>
+                        <input type="text" id="search-filter" class="filter-input" placeholder="Search headlines...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Headlines List -->
+            <div id="headlines-container" class="headlines-container">
+                <div id="headlines-loading" class="headlines-loading">
+                    <div class="spinner"></div>
+                    <p>Loading headlines...</p>
+                </div>
+                <div id="headlines-list" class="headlines-list"></div>
+                <div id="headlines-empty" class="headlines-empty" style="display: none;">
+                    <i class="fas fa-inbox"></i>
+                    <p>No headlines found. Add some test headlines above!</p>
+                </div>
+            </div>
+        </div>
         
         
         <div class="footer">
@@ -421,6 +818,20 @@
         const sentimentBadge = document.getElementById('sentiment-badge');
         const sentimentText = document.getElementById('sentiment-text');
         const commentary = document.getElementById('commentary');
+
+        // New headlines management elements
+        const refreshHeadlinesBtn = document.getElementById('refresh-headlines-btn');
+        const sourceInput = document.getElementById('source-input');
+        const urlInput = document.getElementById('url-input');
+        const newHeadlineInput = document.getElementById('new-headline-input');
+        const addHeadlineBtn = document.getElementById('add-headline-btn');
+        const sourceFilter = document.getElementById('source-filter');
+        const sentimentFilter = document.getElementById('sentiment-filter');
+        const searchFilter = document.getElementById('search-filter');
+        const headlinesContainer = document.getElementById('headlines-container');
+        const headlinesLoading = document.getElementById('headlines-loading');
+        const headlinesList = document.getElementById('headlines-list');
+        const headlinesEmpty = document.getElementById('headlines-empty');
         
         
         function showLoading() {
@@ -456,7 +867,7 @@
             const headline = headlineInput.value.trim();
             
             if (!headline) {
-                alert('Please enter a headline to analyze');
+                showFormError([headlineInput], 'Please enter a headline to analyze');
                 return;
             }
             
@@ -482,7 +893,7 @@
                 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error analyzing sentiment. Please try again.');
+                showFormError([headlineInput], 'Error analyzing sentiment. Please try again.');
             } finally {
                 hideLoading();
             }
@@ -501,6 +912,199 @@
         headlineInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = this.scrollHeight + 'px';
+        });
+
+        function showFormError(inputs, message) {
+            inputs.forEach(input => {
+                input.classList.add('input-error', 'shake');
+                setTimeout(() => input.classList.remove('shake'), 400);
+            });
+
+            let errorEl = document.querySelector('.form-error-global');
+            if (!errorEl) {
+                errorEl = document.createElement('div');
+                errorEl.className = 'form-error form-error-global';
+                // Place error under the appropriate section
+                const parentSection = inputs[0].closest('.add-headline-section') || document.querySelector('.input-section');
+                parentSection.appendChild(errorEl);
+            }
+            errorEl.textContent = message;
+
+            const clearError = (e) => {
+                e.target.classList.remove('input-error');
+                if (inputs.every(i => !i.classList.contains('input-error'))) {
+                    if (errorEl && errorEl.parentNode) errorEl.parentNode.removeChild(errorEl);
+                }
+            };
+            inputs.forEach(input => {
+                input.addEventListener('input', clearError, { once: true });
+                input.addEventListener('focus', () => input.classList.remove('input-error'), { once: true });
+            });
+        }
+
+        // Headlines Management Functions
+
+        async function loadHeadlines() {
+            try {
+                headlinesLoading.style.display = 'block';
+                headlinesList.style.display = 'none';
+                headlinesEmpty.style.display = 'none';
+
+                const params = new URLSearchParams();
+                if (sourceFilter.value) params.append('source', sourceFilter.value);
+                if (sentimentFilter.value) params.append('sentiment', sentimentFilter.value);
+                if (searchFilter.value) params.append('q', searchFilter.value);
+                params.append('limit', '20');
+
+                const response = await fetch(`${API_BASE_URL}/headlines?${params}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const data = await response.json();
+                displayHeadlines(data.items);
+                updateSourceFilter(data.items);
+                
+            } catch (error) {
+                console.error('Error loading headlines:', error);
+                headlinesList.innerHTML = '<div class="headlines-empty"><i class="fas fa-exclamation-triangle"></i><p>Error loading headlines. Please try again.</p></div>';
+                headlinesList.style.display = 'block';
+            } finally {
+                headlinesLoading.style.display = 'none';
+            }
+        }
+
+        function displayHeadlines(headlines) {
+            headlinesList.innerHTML = '';
+            
+            if (headlines.length === 0) {
+                headlinesEmpty.style.display = 'block';
+                headlinesList.style.display = 'none';
+                return;
+            }
+
+            headlinesEmpty.style.display = 'none';
+            headlinesList.style.display = 'block';
+
+            headlines.forEach(headline => {
+                const headlineElement = createHeadlineElement(headline);
+                headlinesList.appendChild(headlineElement);
+            });
+        }
+
+        function createHeadlineElement(headline) {
+            const div = document.createElement('div');
+            div.className = 'headline-item';
+            
+            const publishedDate = headline.published_at ? 
+                new Date(headline.published_at).toLocaleDateString() : 
+                new Date(headline.created_at).toLocaleDateString();
+            
+            const sentimentClass = headline.sentiment || 'neutral';
+            const sentimentText = headline.sentiment ? headline.sentiment.charAt(0).toUpperCase() + headline.sentiment.slice(1) : 'Unknown';
+            
+            div.innerHTML = `
+                <div class="headline-header">
+                    <h3 class="headline-title">${headline.title}</h3>
+                    <span class="headline-sentiment ${sentimentClass}">${sentimentText}</span>
+                </div>
+                <div class="headline-meta">
+                    <span class="headline-source">${headline.source}</span>
+                    <span class="headline-date">${publishedDate}</span>
+                </div>
+                ${headline.commentary ? `<div class="headline-commentary">${headline.commentary}</div>` : ''}
+                <div class="headline-url">
+                    <a href="${headline.url}" target="_blank" rel="noopener">
+                        <i class="fas fa-external-link-alt"></i> View Source
+                    </a>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        function updateSourceFilter(headlines) {
+            const sources = [...new Set(headlines.map(h => h.source))].sort();
+            sourceFilter.innerHTML = '<option value="">All Sources</option>';
+            sources.forEach(source => {
+                const option = document.createElement('option');
+                option.value = source;
+                option.textContent = source;
+                sourceFilter.appendChild(option);
+            });
+        }
+
+        async function addHeadline() {
+            const source = sourceInput.value.trim();
+            const url = urlInput.value.trim();
+            const title = newHeadlineInput.value.trim();
+
+            if (!source || !url || !title) {
+                showFormError([sourceInput, urlInput, newHeadlineInput], 'Please fill in all fields');
+                return;
+            }
+
+            try {
+                addHeadlineBtn.disabled = true;
+                addHeadlineBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+
+                const response = await fetch(`${API_BASE_URL}/headlines`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        source: source,
+                        title: title,
+                        url: url,
+                        published_at: new Date().toISOString(),
+                        raw_text: null
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                }
+
+                // Clear form
+                sourceInput.value = '';
+                urlInput.value = '';
+                newHeadlineInput.value = '';
+
+                // Reload headlines
+                await loadHeadlines();
+
+            } catch (error) {
+                console.error('Error adding headline:', error);
+                showFormError([sourceInput, urlInput, newHeadlineInput], error.message || 'Error adding headline');
+            } finally {
+                addHeadlineBtn.disabled = false;
+                addHeadlineBtn.innerHTML = '<i class="fas fa-plus"></i> Add & Analyze';
+            }
+        }
+
+        // Event listeners for headlines management
+        refreshHeadlinesBtn.addEventListener('click', loadHeadlines);
+        addHeadlineBtn.addEventListener('click', addHeadline);
+        sourceFilter.addEventListener('change', loadHeadlines);
+        sentimentFilter.addEventListener('change', loadHeadlines);
+        searchFilter.addEventListener('input', debounce(loadHeadlines, 500));
+
+        // Debounce function for search
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Load headlines on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHeadlines();
         });
     </script>
 </body>
