@@ -36,6 +36,8 @@ A FastAPI-based web service that analyzes the sentiment of financial news headli
 ## Features
 
 - **Sandbox Mode** To experiment with the model instantly. 
+- **Live Web Scraping** From 4 free to access sources (CNBC, Yahoo Finance, Reuters, MarketWatch)
+- **Trend Analysys** coming soon...
 - **Stored Headlines section** To add test headlines (auto-analyzed on insert), view sentiment, commentary, source, and dates. Filter and search available.
 - **Works on any device locally** - phone, tablet, desktop with a stylish black/white UI with subtle market inspired visuals.
 
@@ -48,6 +50,8 @@ fin-news-analyzer/
 │ ├── schema.py # Pydantic schemas
 │ ├── db.py # SQLAlchemy engine/session/Base
 │ └── db_models.py # ORM models (Headline)
+| └── scraper_service.py
+| └── scraper.py
 ├── backend/
 │ └── finnews.db # SQLite database (auto-created)
 ├── frontend/
@@ -119,7 +123,6 @@ fin-news-analyzer/
 
 ## What's Next?
 
-This is just the beginning, I am working on the following features currently and will ship ASAP:
+I am currently working on the following features currently and will ship ASAP:
 - Web Deployment
-- RSS/Atom scraper to ingest live headlines
 - Historical analysis & trends
