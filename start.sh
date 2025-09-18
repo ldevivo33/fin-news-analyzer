@@ -10,7 +10,7 @@ echo "Starting Financial News Sentiment Analyzer..."
 export HOST=${HOST:-"0.0.0.0"}
 export PORT=${PORT:-"8000"}
 export DEBUG=${DEBUG:-"false"}
-export LOG_LEVEL=${LOG_LEVEL:-"INFO"}
+export LOG_LEVEL=${LOG_LEVEL:-"info"}
 export DB_TYPE=${DB_TYPE:-"sqlite"}
 export DB_NAME=${DB_NAME:-"finnews"}
 
