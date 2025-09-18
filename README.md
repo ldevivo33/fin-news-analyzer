@@ -1,5 +1,7 @@
 # Financial News Sentiment Analyzer
 
+ACCESS @ http://ec2-3-150-176-59.us-east-2.compute.amazonaws.com:8000/
+
 A FastAPI-based web service that analyzes the sentiment of financial news headlines by leveraging AI and machine learning insights.
 
 ### Prerequisites
