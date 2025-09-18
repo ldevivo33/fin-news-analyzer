@@ -54,6 +54,7 @@ async def startup_event():
 from .schema import HeadlineRequest, SentimentResponse, HeadlineCreate, HeadlinesResponse, HeadlineOut
 from .db import get_db, Base, engine
 from .db_models import Headline
+from .scraper_service import ScraperService
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
@@ -179,3 +180,155 @@ def get_headline(headline_id: int, db: Session = Depends(get_db)):
     if not obj:
         raise HTTPException(status_code=404, detail="Headline not found")
     return obj
+
+
+@app.delete("/headlines/{headline_id}")
+def delete_headline(headline_id: int, db: Session = Depends(get_db)):
+    """Delete a specific headline by ID."""
+    obj = db.get(Headline, headline_id)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Headline not found")
+    
+    db.delete(obj)
+    db.commit()
+    
+    return {"message": f"Headline {headline_id} deleted successfully"}
+
+
+@app.delete("/headlines")
+def clear_all_headlines(db: Session = Depends(get_db)):
+    """Delete all headlines from the database."""
+    try:
+        # Count headlines before deletion
+        count_stmt = select(func.count(Headline.id))
+        total_count = db.execute(count_stmt).scalar()
+        
+        # Delete all headlines
+        delete_stmt = select(Headline)
+        headlines = db.execute(delete_stmt).scalars().all()
+        
+        for headline in headlines:
+            db.delete(headline)
+        
+        db.commit()
+        
+        return {
+            "message": f"All headlines cleared successfully",
+            "deleted_count": total_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error clearing headlines: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to clear headlines: {str(e)}")
+
+
+# Scraping endpoints
+
+@app.post("/scrape")
+async def scrape_headlines(
+    source: str = "CNBC",
+    max_headlines: int = 20,
+    db: Session = Depends(get_db)
+):
+    """
+    Manually trigger scraping of headlines from specified source.
+    
+    Args:
+        source: Source to scrape from (CNBC, Yahoo Finance, Reuters, MarketWatch)
+        max_headlines: Maximum number of headlines to scrape
+        
+    Returns:
+        Scraping results with counts
+    """
+    try:
+        scraper_service = ScraperService(db)
+        results = await scraper_service.scrape_and_store_headlines(
+            source=source,
+            max_headlines=max_headlines
+        )
+        
+        return {
+            "message": f"Scraping completed for {source}",
+            "results": results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in scrape endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Scraping failed: {str(e)}")
+
+
+@app.post("/scrape/all")
+async def scrape_all_sources(
+    max_headlines_per_source: int = 10,
+    db: Session = Depends(get_db)
+):
+    """
+    Scrape headlines from all available sources.
+    
+    Args:
+        max_headlines_per_source: Maximum number of headlines per source
+        
+    Returns:
+        Scraping results for all sources
+    """
+    try:
+        scraper_service = ScraperService(db)
+        results = await scraper_service.scrape_all_sources(
+            max_headlines_per_source=max_headlines_per_source
+        )
+        
+        total_scraped = sum(r['scraped'] for r in results.values())
+        total_stored = sum(r['stored'] for r in results.values())
+        
+        return {
+            "message": f"Scraping completed for all sources. Total: {total_scraped} scraped, {total_stored} stored",
+            "results": results,
+            "summary": {
+                "total_scraped": total_scraped,
+                "total_stored": total_stored,
+                "sources": list(results.keys())
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in scrape all endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Scraping failed: {str(e)}")
+
+
+@app.get("/scrape/stats")
+def get_scraping_stats(db: Session = Depends(get_db)):
+    """Get statistics about scraped headlines."""
+    try:
+        scraper_service = ScraperService(db)
+        stats = scraper_service.get_scraping_stats()
+        
+        return {
+            "message": "Scraping statistics",
+            "stats": stats
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting scraping stats: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
+
+
+@app.get("/scrape/recent")
+def get_recent_scraped_headlines(
+    source: str = None,
+    limit: int = 10,
+    db: Session = Depends(get_db)
+):
+    """Get recently scraped headlines."""
+    try:
+        scraper_service = ScraperService(db)
+        headlines = scraper_service.get_recent_headlines(source=source, limit=limit)
+        
+        return {
+            "message": f"Recent headlines from {source or 'all sources'}",
+            "headlines": headlines
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting recent headlines: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get recent headlines: {str(e)}")

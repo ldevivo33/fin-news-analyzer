@@ -614,6 +614,59 @@
             text-decoration: underline;
         }
 
+        .headline-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .delete-btn {
+            background: #ff4444;
+            color: #ffffff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .delete-btn:hover {
+            background: #cc3333;
+            transform: translateY(-1px);
+        }
+
+        .clear-all-btn {
+            background: #ff6666;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        .clear-all-btn:hover {
+            background: #ff4444;
+            transform: translateY(-2px);
+        }
+
+        .clear-all-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2.3rem; /* 2.5 * 0.92 */
@@ -730,13 +783,54 @@
             </div>
         </div>
 
+        <!-- Web Scraping Section -->
+        <div class="main-card">
+            <div class="section-header">
+                <h2><i class="fas fa-spider"></i> Web Scraping</h2>
+            </div>
+
+            <!-- Scraping Controls -->
+            <div class="add-headline-section">
+                <h3><i class="fas fa-globe"></i> Scrape Financial News</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="scrape-source" class="form-label">Source</label>
+                        <select id="scrape-source" class="form-input">
+                            <option value="CNBC">CNBC Finance</option>
+                            <option value="Yahoo Finance">Yahoo Finance</option>
+                            <option value="Reuters">Reuters Markets</option>
+                            <option value="MarketWatch">MarketWatch</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="scrape-count" class="form-label">Max Headlines</label>
+                        <input type="number" id="scrape-count" class="form-input" value="10" min="1" max="50">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <button id="scrape-single-btn" class="add-btn">
+                        <i class="fas fa-download"></i> Scrape Source
+                    </button>
+                    <button id="scrape-all-btn" class="add-btn" style="background: #ff6b35;">
+                        <i class="fas fa-globe"></i> Scrape All Sources
+                    </button>
+                </div>
+                <div id="scrape-status" class="form-error" style="margin-top: 12px; display: none;"></div>
+            </div>
+        </div>
+
         <!-- Headlines Management Section -->
         <div class="main-card">
             <div class="section-header">
                 <h2><i class="fas fa-database"></i> Stored Headlines</h2>
-                <button id="refresh-headlines-btn" class="refresh-btn">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <button id="clear-all-btn" class="clear-all-btn">
+                        <i class="fas fa-trash"></i> Clear All
+                    </button>
+                    <button id="refresh-headlines-btn" class="refresh-btn">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
             </div>
 
             <!-- Add New Headline Form -->
@@ -821,6 +915,7 @@
 
         // New headlines management elements
         const refreshHeadlinesBtn = document.getElementById('refresh-headlines-btn');
+        const clearAllBtn = document.getElementById('clear-all-btn');
         const sourceInput = document.getElementById('source-input');
         const urlInput = document.getElementById('url-input');
         const newHeadlineInput = document.getElementById('new-headline-input');
@@ -832,6 +927,13 @@
         const headlinesLoading = document.getElementById('headlines-loading');
         const headlinesList = document.getElementById('headlines-list');
         const headlinesEmpty = document.getElementById('headlines-empty');
+
+        // Scraping elements
+        const scrapeSource = document.getElementById('scrape-source');
+        const scrapeCount = document.getElementById('scrape-count');
+        const scrapeSingleBtn = document.getElementById('scrape-single-btn');
+        const scrapeAllBtn = document.getElementById('scrape-all-btn');
+        const scrapeStatus = document.getElementById('scrape-status');
         
         
         function showLoading() {
@@ -1016,6 +1118,11 @@
                         <i class="fas fa-external-link-alt"></i> View Source
                     </a>
                 </div>
+                <div class="headline-actions">
+                    <button class="delete-btn" onclick="deleteHeadline(${headline.id})">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
             `;
             
             return div;
@@ -1082,12 +1189,144 @@
             }
         }
 
+        async function deleteHeadline(headlineId) {
+            if (!confirm('Are you sure you want to delete this headline?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/headlines/${headlineId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Reload headlines to update the list
+                await loadHeadlines();
+
+            } catch (error) {
+                console.error('Error deleting headline:', error);
+                alert('Error deleting headline. Please try again.');
+            }
+        }
+
+        async function clearAllHeadlines() {
+            if (!confirm('Are you sure you want to delete ALL headlines? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                clearAllBtn.disabled = true;
+                clearAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing...';
+
+                const response = await fetch(`${API_BASE_URL}/headlines`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log(`Cleared ${data.deleted_count} headlines`);
+
+                // Reload headlines to update the list
+                await loadHeadlines();
+
+            } catch (error) {
+                console.error('Error clearing headlines:', error);
+                alert('Error clearing headlines. Please try again.');
+            } finally {
+                clearAllBtn.disabled = false;
+                clearAllBtn.innerHTML = '<i class="fas fa-trash"></i> Clear All';
+            }
+        }
+
+        // Scraping Functions
+        async function scrapeSingleSource() {
+            const source = scrapeSource.value;
+            const maxHeadlines = parseInt(scrapeCount.value);
+
+            try {
+                scrapeSingleBtn.disabled = true;
+                scrapeSingleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scraping...';
+                scrapeStatus.style.display = 'block';
+                scrapeStatus.style.color = '#00ff88';
+                scrapeStatus.textContent = `Scraping ${source}...`;
+
+                const response = await fetch(`${API_BASE_URL}/scrape?source=${encodeURIComponent(source)}&max_headlines=${maxHeadlines}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                scrapeStatus.style.color = '#00ff88';
+                scrapeStatus.textContent = `✅ ${data.message}. Scraped: ${data.results.scraped}, Stored: ${data.results.stored}`;
+
+                // Reload headlines to show new data
+                await loadHeadlines();
+
+            } catch (error) {
+                console.error('Error scraping:', error);
+                scrapeStatus.style.color = '#ff4444';
+                scrapeStatus.textContent = `❌ Error scraping ${source}: ${error.message}`;
+            } finally {
+                scrapeSingleBtn.disabled = false;
+                scrapeSingleBtn.innerHTML = '<i class="fas fa-download"></i> Scrape Source';
+            }
+        }
+
+        async function scrapeAllSources() {
+            const maxHeadlines = parseInt(scrapeCount.value);
+
+            try {
+                scrapeAllBtn.disabled = true;
+                scrapeAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scraping All...';
+                scrapeStatus.style.display = 'block';
+                scrapeStatus.style.color = '#00ff88';
+                scrapeStatus.textContent = 'Scraping all sources...';
+
+                const response = await fetch(`${API_BASE_URL}/scrape/all?max_headlines_per_source=${maxHeadlines}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                scrapeStatus.style.color = '#00ff88';
+                scrapeStatus.textContent = `✅ ${data.message}`;
+
+                // Reload headlines to show new data
+                await loadHeadlines();
+
+            } catch (error) {
+                console.error('Error scraping all sources:', error);
+                scrapeStatus.style.color = '#ff4444';
+                scrapeStatus.textContent = `❌ Error scraping all sources: ${error.message}`;
+            } finally {
+                scrapeAllBtn.disabled = false;
+                scrapeAllBtn.innerHTML = '<i class="fas fa-globe"></i> Scrape All Sources';
+            }
+        }
+
         // Event listeners for headlines management
         refreshHeadlinesBtn.addEventListener('click', loadHeadlines);
+        clearAllBtn.addEventListener('click', clearAllHeadlines);
         addHeadlineBtn.addEventListener('click', addHeadline);
         sourceFilter.addEventListener('change', loadHeadlines);
         sentimentFilter.addEventListener('change', loadHeadlines);
         searchFilter.addEventListener('input', debounce(loadHeadlines, 500));
+
+        // Event listeners for scraping
+        scrapeSingleBtn.addEventListener('click', scrapeSingleSource);
+        scrapeAllBtn.addEventListener('click', scrapeAllSources);
 
         // Debounce function for search
         function debounce(func, wait) {
