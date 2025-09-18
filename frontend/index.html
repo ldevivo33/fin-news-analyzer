@@ -972,7 +972,17 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:8000';
+        // Dynamically determine API base URL
+        function getApiBaseUrl() {
+            // If we're running in production (not localhost), use the current origin
+            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                return window.location.origin;
+            }
+            // For local development, use localhost:8000
+            return 'http://localhost:8000';
+        }
+        
+        const API_BASE_URL = getApiBaseUrl();
         
         const headlineInput = document.getElementById('headline-input');
         const analyzeBtn = document.getElementById('analyze-btn');

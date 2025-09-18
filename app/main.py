@@ -8,10 +8,24 @@ from typing import Optional
 import uvicorn
 import logging
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
+
+# Environment configuration
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", "8000"))
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 # Initialize FastAPI app instance
 app = FastAPI(
@@ -23,9 +37,10 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -88,14 +103,23 @@ async def analyze_sentiment(request: HeadlineRequest):
 # Import sentiment analysis function from models.py
 from .models import analyze_headline_sentiment
 
+# Get the project root directory
+PROJECT_ROOT = Path(__file__).parent.parent
+FRONTEND_DIR = PROJECT_ROOT / "frontend"
+
 # Mount static files for the frontend
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+if FRONTEND_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 # Serve the React frontend
 @app.get("/")
 async def serve_frontend():
     """Serve the React frontend."""
-    return FileResponse("frontend/index.html")
+    frontend_path = FRONTEND_DIR / "index.html"
+    if frontend_path.exists():
+        return FileResponse(str(frontend_path))
+    else:
+        raise HTTPException(status_code=404, detail="Frontend not found")
 
 # Health check endpoint
 @app.get("/health")
@@ -104,7 +128,13 @@ async def health_check():
 
 # Run the application
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        "app.main:app", 
+        host=HOST, 
+        port=PORT, 
+        reload=DEBUG,
+        log_level=log_level.lower()
+    )
 
 
 # Headlines storage and retrieval APIs
