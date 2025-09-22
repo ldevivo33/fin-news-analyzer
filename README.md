@@ -126,5 +126,6 @@ fin-news-analyzer/
 ## What's Next?
 
 I am currently working on the following features currently and will ship ASAP:
-- Web Deployment
+- Web up time consistency and security
+- Scraping logs
 - Historical analysis & trends
