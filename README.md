@@ -161,3 +161,4 @@ I am currently working on the following features and will ship ASAP:
 - PostgresSQL for cloud native database
 - Further Docker wrapping
 - CI/CD configuration
+- Unit Testing
