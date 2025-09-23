@@ -24,6 +24,12 @@ A FastAPI-based web service that analyzes the sentiment of financial news headli
 3. **Access the Frontend UI:**
    http://localhost:8000
 
+### Quick Start (Alternative)
+Use the provided startup script:
+```bash
+./start.sh
+```
+
 ## Tech Stack
 
 - Backend: FastAPI, Pydantic, SQLAlchemy 2.x, SQLite
@@ -123,9 +129,68 @@ fin-news-analyzer/
 - If `/headlines` is empty, add a test headline using the form or POST endpoint.
 - SQLite file is created at `backend/finnews.db`. Ensure the process has write permissions.
 
+## Deployment
+
+### Production Deployment
+
+The application is currently deployed on AWS EC2 with the following production setup:
+
+#### Pre-Deployment Checklist
+- ✅ SSH key file added to .gitignore
+- ✅ Database files excluded from version control  
+- ✅ Environment variables properly configured
+- ✅ All sensitive files protected
+
+#### Deployment Commands
+```bash
+# Commit your changes
+git add .
+git commit -m "Update: Fix UI issues, enhance filtering, improve performance"
+git push origin main
+
+# Deploy to production (run on your EC2 instance)
+git pull origin main
+sudo systemctl restart finnews-analyzer
+sudo systemctl status finnews-analyzer
+```
+
+### Infrastructure
+- **Server**: AWS EC2 Ubuntu 22.04 instance
+- **Domain**: Custom domain managed via Squarespace (finnewsanalyzer.site)
+- **SSL**: Let's Encrypt HTTPS with auto-renewal
+- **Reverse Proxy**: Nginx for SSL termination and static file serving
+- **Process Management**: systemd for 24/7 uptime and auto-restart
+- **Security**: AWS Security Groups (only ports 22/80/443 open)
+
+### Production Stack
+- **Backend**: FastAPI + Uvicorn (managed by systemd)
+- **Frontend**: Static files served by Nginx
+- **Database**: SQLite (backend/finnews.db)
+- **SSL Certificate**: Let's Encrypt (auto-renewal configured)
+- **DNS**: Elastic IP with A-records pointing to EC2 instance
+
+### Access
+- **Production URL**: https://finnewsanalyzer.site/
+- **Status**: Live and operational 24/7
+
+## Recent Updates
+
+### Latest Improvements (v1.1)
+- ✅ **Fixed UI/UX Issues**: Removed auto-scrolling in sandbox mode, fixed clickable text cursors
+- ✅ **Enhanced Filtering**: Fixed source dropdown functionality and improved filter logic
+- ✅ **Better Count Display**: Total count now shows actual database count, showing count reflects filtered results
+- ✅ **Improved Error Handling**: Added comprehensive error handling and debugging for all API calls
+- ✅ **Performance Optimizations**: Reduced unnecessary API calls and improved data loading
+- ✅ **Clean Codebase**: Removed unused trends analysis code that was causing issues
+
+### Database & Performance
+- **Storage Capacity**: Can handle hundreds of thousands of headlines (SQLite database)
+- **Query Limits**: 100 headlines per request (pagination support)
+- **Performance**: Optimized for up to 100K+ headlines with good response times
+
 ## What's Next?
 
-I am currently working on the following features currently and will ship ASAP:
-- Web up time consistency and security
-- Scraping logs
-- Historical analysis & trends
+I am currently working on the following features and will ship ASAP:
+- Performance monitoring and alerts
+- Advanced filtering and search capabilities
+- Historical Trend Analysis

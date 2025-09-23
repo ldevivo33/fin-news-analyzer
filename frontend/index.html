@@ -6,7 +6,6 @@
     <title>Financial News Sentiment Analyzer</title>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -21,6 +20,17 @@
             color: #ffffff;
             position: relative;
             overflow-y: auto;
+            user-select: none; /* Prevent text selection on body */
+        }
+        
+        /* Allow text selection only in input fields and textareas */
+        input, textarea, select {
+            user-select: text;
+        }
+        
+        /* Prevent cursor pointer on non-interactive elements */
+        h1, h2, h3, h4, h5, h6, p, span, div:not([class*="btn"]):not([class*="input"]):not([class*="select"]) {
+            cursor: default;
         }
         
         body::before {
@@ -847,39 +857,6 @@
             </div>
         </div>
 
-        <!-- Trends Analysis Section -->
-        <div class="main-card">
-            <div class="section-header">
-                <h2><i class="fas fa-chart-line"></i> Sentiment Trends</h2>
-                <button id="refresh-trends-btn" class="refresh-btn">
-                    <i class="fas fa-sync-alt"></i> Refresh Trends
-                </button>
-            </div>
-
-            <!-- Daily Sentiment Summary -->
-            <div class="add-headline-section">
-                <h3><i class="fas fa-calendar-day"></i> Today's Sentiment Overview</h3>
-                <div id="daily-sentiment-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
-                    <!-- Will be populated by JavaScript -->
-                </div>
-            </div>
-
-            <!-- Sentiment Chart -->
-            <div class="add-headline-section">
-                <h3><i class="fas fa-chart-area"></i> Sentiment Over Time</h3>
-                <div id="sentiment-chart-container" style="height: 300px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                    <canvas id="sentiment-chart" width="400" height="200"></canvas>
-                </div>
-            </div>
-
-            <!-- Source Breakdown -->
-            <div class="add-headline-section">
-                <h3><i class="fas fa-pie-chart"></i> Sentiment by Source</h3>
-                <div id="source-breakdown" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
-                    <!-- Will be populated by JavaScript -->
-                </div>
-            </div>
-        </div>
 
         <!-- Headlines Management Section -->
         <div class="main-card">
@@ -1017,16 +994,9 @@
         const scrapeStatus = document.getElementById('scrape-status');
 
         // Count elements
-        const totalCount = document.getElementById('total-count');
+        const totalCountElement = document.getElementById('total-count');
         const showingCount = document.getElementById('showing-count');
 
-        // Trends elements
-        const refreshTrendsBtn = document.getElementById('refresh-trends-btn');
-        const dailySentimentSummary = document.getElementById('daily-sentiment-summary');
-        const sentimentChartContainer = document.getElementById('sentiment-chart-container');
-        const sentimentChartCanvas = document.getElementById('sentiment-chart');
-        const sourceBreakdown = document.getElementById('source-breakdown');
-        let sentimentChart = null;
         
         
         function showLoading() {
@@ -1054,8 +1024,7 @@
             // Show result section
             resultSection.style.display = 'block';
             
-            // Scroll to result
-            resultSection.scrollIntoView({ behavior: 'smooth' });
+            // Don't scroll to result - remove auto-scrolling
         }
         
         async function analyzeSentiment() {
@@ -1141,27 +1110,62 @@
 
         async function loadHeadlines() {
             try {
+                console.log('Loading headlines...');
                 headlinesLoading.style.display = 'block';
                 headlinesScrollContainer.style.display = 'none';
                 headlinesEmpty.style.display = 'none';
 
                 const params = new URLSearchParams();
-                if (sourceFilter.value) params.append('source', sourceFilter.value);
-                if (sentimentFilter.value) params.append('sentiment', sentimentFilter.value);
-                if (searchFilter.value) params.append('q', searchFilter.value);
+                if (sourceFilter.value && sourceFilter.value.trim() !== '') params.append('source', sourceFilter.value);
+                if (sentimentFilter.value && sentimentFilter.value.trim() !== '') params.append('sentiment', sentimentFilter.value);
+                if (searchFilter.value && searchFilter.value.trim() !== '') params.append('q', searchFilter.value);
                 params.append('limit', '100');
 
-                const response = await fetch(`${API_BASE_URL}/headlines?${params}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const url = `${API_BASE_URL}/headlines?${params}`;
+                console.log('Fetching from:', url);
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error:', response.status, errorText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 
                 const data = await response.json();
                 console.log('API Response:', data); // Debug log
-                displayHeadlines(data.items, data.total);
-                updateSourceFilter(data.items);
+                
+                // Ensure we have valid data structure
+                const items = Array.isArray(data.items) ? data.items : [];
+                const filteredTotal = typeof data.total === 'number' ? data.total : items.length;
+                
+                // Get the actual database total (without filters) for display
+                let databaseTotal = filteredTotal;
+                if ((sourceFilter.value && sourceFilter.value.trim() !== '') || 
+                    (sentimentFilter.value && sentimentFilter.value.trim() !== '') || 
+                    (searchFilter.value && searchFilter.value.trim() !== '')) {
+                    try {
+                        const totalResponse = await fetch(`${API_BASE_URL}/headlines?limit=1`);
+                        if (totalResponse.ok) {
+                            const totalData = await totalResponse.json();
+                            databaseTotal = typeof totalData.total === 'number' ? totalData.total : filteredTotal;
+                        }
+                    } catch (e) {
+                        console.warn('Could not fetch database total:', e);
+                    }
+                }
+                
+                console.log('Items:', items.length, 'Filtered Total:', filteredTotal, 'Database Total:', databaseTotal);
+                displayHeadlines(items, databaseTotal);
+                
+                // Only update source filter on initial load or when adding new headlines
+                // Don't update it every time we filter, as it causes issues
+                if (!sourceFilter.options || sourceFilter.options.length <= 1) {
+                    await updateSourceFilterAll();
+                }
                 
             } catch (error) {
                 console.error('Error loading headlines:', error);
-                headlinesEmpty.innerHTML = '<i class="fas fa-exclamation-triangle"></i><p>Error loading headlines. Please try again.</p>';
+                headlinesEmpty.innerHTML = `<i class="fas fa-exclamation-triangle"></i><p>Error loading headlines: ${error.message}</p><p>Please check the console for more details.</p>`;
                 headlinesEmpty.style.display = 'block';
                 headlinesScrollContainer.style.display = 'none';
             } finally {
@@ -1173,8 +1177,11 @@
             headlinesList.innerHTML = '';
             
             // Update counts
-            if (totalCount !== null) {
-                totalCount.textContent = `Total: ${totalCount}`;
+            if (totalCount !== null && totalCount !== undefined) {
+                totalCountElement.textContent = `Total: ${totalCount}`;
+            } else {
+                // Fallback: if no total count provided, show the current items count
+                totalCountElement.textContent = `Total: ${headlines.length}`;
             }
             showingCount.textContent = `Showing: ${headlines.length}`;
             
@@ -1229,20 +1236,53 @@
             return div;
         }
 
-        function updateSourceFilter(headlines) {
-            const sources = [...new Set(headlines.map(h => h.source))].sort();
-            const currentValue = sourceFilter.value; // Save current selection
-            
-            sourceFilter.innerHTML = '<option value="">All Sources</option>';
-            sources.forEach(source => {
-                const option = document.createElement('option');
-                option.value = source;
-                option.textContent = source;
-                if (source === currentValue) {
-                    option.selected = true; // Restore selection
+        // Update source filter with all available sources (not filtered)
+        async function updateSourceFilterAll() {
+            try {
+                console.log('Updating source filter...');
+                
+                // Get all headlines to populate the source dropdown
+                const response = await fetch(`${API_BASE_URL}/headlines?limit=1000`);
+                if (!response.ok) {
+                    console.error('Failed to fetch headlines for source filter:', response.status);
+                    return;
                 }
-                sourceFilter.appendChild(option);
-            });
+                
+                const data = await response.json();
+                const headlines = data.items || [];
+                console.log('Fetched headlines for source filter:', headlines.length);
+                
+                const sources = [...new Set(headlines.map(h => h.source))].sort();
+                console.log('Available sources:', sources);
+                
+                const currentValue = sourceFilter.value; // Save current selection
+                console.log('Current selected value:', currentValue);
+                
+                // Clear and rebuild the dropdown
+                sourceFilter.innerHTML = '<option value="">All Sources</option>';
+                
+                sources.forEach(source => {
+                    if (source && source.trim() !== '') { // Only add non-empty sources
+                        const option = document.createElement('option');
+                        option.value = source;
+                        option.textContent = source;
+                        if (source === currentValue) {
+                            option.selected = true; // Restore selection
+                            console.log('Restored selection:', source);
+                        }
+                        sourceFilter.appendChild(option);
+                    }
+                });
+                
+                console.log('Source filter updated successfully');
+            } catch (error) {
+                console.error('Error updating source filter:', error);
+            }
+        }
+
+        // Legacy function for backward compatibility (now calls the new one)
+        function updateSourceFilter(headlines) {
+            updateSourceFilterAll();
         }
 
         async function addHeadline() {
@@ -1283,8 +1323,9 @@
                 urlInput.value = '';
                 newHeadlineInput.value = '';
 
-                // Reload headlines
+                // Reload headlines and update source filter
                 await loadHeadlines();
+                await updateSourceFilterAll();
 
             } catch (error) {
                 console.error('Error adding headline:', error);
@@ -1434,215 +1475,10 @@
         scrapeSingleBtn.addEventListener('click', scrapeSingleSource);
         scrapeAllBtn.addEventListener('click', scrapeAllSources);
 
-        // Trends Analysis Functions
-        async function loadTrendsAnalysis() {
-            try {
-                // Get all headlines for analysis
-                const response = await fetch(`${API_BASE_URL}/headlines?limit=1000`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                const data = await response.json();
-                const headlines = data.items;
-                
-                // Generate daily sentiment summary
-                generateDailySentimentSummary(headlines);
-                
-                // Generate sentiment chart
-                generateSentimentChart(headlines);
-                
-                // Generate source breakdown
-                generateSourceBreakdown(headlines);
-                
-            } catch (error) {
-                console.error('Error loading trends analysis:', error);
-            }
-        }
 
-        function generateDailySentimentSummary(headlines) {
-            const today = new Date().toDateString();
-            const todayHeadlines = headlines.filter(h => {
-                const headlineDate = new Date(h.created_at).toDateString();
-                return headlineDate === today;
-            });
 
-            const sentimentCounts = {
-                positive: todayHeadlines.filter(h => h.sentiment === 'positive').length,
-                negative: todayHeadlines.filter(h => h.sentiment === 'negative').length,
-                neutral: todayHeadlines.filter(h => h.sentiment === 'neutral').length
-            };
 
-            const total = todayHeadlines.length;
-            const positivePercent = total > 0 ? Math.round((sentimentCounts.positive / total) * 100) : 0;
-            const negativePercent = total > 0 ? Math.round((sentimentCounts.negative / total) * 100) : 0;
-            const neutralPercent = total > 0 ? Math.round((sentimentCounts.neutral / total) * 100) : 0;
 
-            dailySentimentSummary.innerHTML = `
-                <div style="background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 8px; padding: 16px; text-align: center;">
-                    <div style="font-size: 2rem; font-weight: bold; color: #00ff88;">${sentimentCounts.positive}</div>
-                    <div style="color: #00ff88; font-weight: 600;">Positive (${positivePercent}%)</div>
-                </div>
-                <div style="background: rgba(255, 68, 68, 0.1); border: 1px solid rgba(255, 68, 68, 0.3); border-radius: 8px; padding: 16px; text-align: center;">
-                    <div style="font-size: 2rem; font-weight: bold; color: #ff4444;">${sentimentCounts.negative}</div>
-                    <div style="color: #ff4444; font-weight: 600;">Negative (${negativePercent}%)</div>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; padding: 16px; text-align: center;">
-                    <div style="font-size: 2rem; font-weight: bold; color: #ffffff;">${sentimentCounts.neutral}</div>
-                    <div style="color: #ffffff; font-weight: 600;">Neutral (${neutralPercent}%)</div>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 16px; text-align: center;">
-                    <div style="font-size: 2rem; font-weight: bold; color: #cccccc;">${total}</div>
-                    <div style="color: #cccccc; font-weight: 600;">Total Today</div>
-                </div>
-            `;
-        }
-
-        function generateSentimentChart(headlines) {
-            // Group headlines by date
-            const dailyData = {};
-            headlines.forEach(headline => {
-                const date = new Date(headline.created_at).toDateString();
-                if (!dailyData[date]) {
-                    dailyData[date] = { positive: 0, negative: 0, neutral: 0 };
-                }
-                dailyData[date][headline.sentiment]++;
-            });
-
-            // Sort dates and get last 7 days
-            const sortedDates = Object.keys(dailyData).sort().slice(-7);
-            const labels = sortedDates.map(date => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-            
-            const positiveData = sortedDates.map(date => dailyData[date].positive);
-            const negativeData = sortedDates.map(date => dailyData[date].negative);
-            const neutralData = sortedDates.map(date => dailyData[date].neutral);
-
-            // Destroy existing chart
-            if (sentimentChart) {
-                sentimentChart.destroy();
-            }
-
-            // Create new chart
-            const ctx = sentimentChartCanvas.getContext('2d');
-            sentimentChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Positive',
-                            data: positiveData,
-                            borderColor: '#00ff88',
-                            backgroundColor: 'rgba(0, 255, 136, 0.1)',
-                            tension: 0.4,
-                            fill: false
-                        },
-                        {
-                            label: 'Negative',
-                            data: negativeData,
-                            borderColor: '#ff4444',
-                            backgroundColor: 'rgba(255, 68, 68, 0.1)',
-                            tension: 0.4,
-                            fill: false
-                        },
-                        {
-                            label: 'Neutral',
-                            data: neutralData,
-                            borderColor: '#ffffff',
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            tension: 0.4,
-                            fill: false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#ffffff'
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                color: '#cccccc'
-                            },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            }
-                        },
-                        y: {
-                            ticks: {
-                                color: '#cccccc'
-                            },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function generateSourceBreakdown(headlines) {
-            const sourceData = {};
-            headlines.forEach(headline => {
-                if (!sourceData[headline.source]) {
-                    sourceData[headline.source] = { positive: 0, negative: 0, neutral: 0, total: 0 };
-                }
-                sourceData[headline.source][headline.sentiment]++;
-                sourceData[headline.source].total++;
-            });
-
-            sourceBreakdown.innerHTML = Object.entries(sourceData).map(([source, data]) => {
-                const positivePercent = Math.round((data.positive / data.total) * 100);
-                const negativePercent = Math.round((data.negative / data.total) * 100);
-                const neutralPercent = Math.round((data.neutral / data.total) * 100);
-
-                return `
-                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 16px;">
-                        <h4 style="color: #ffffff; margin-bottom: 12px; font-size: 1.1rem;">${source}</h4>
-                        <div style="margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: #00ff88; font-size: 0.9rem;">Positive</span>
-                                <span style="color: #00ff88; font-weight: 600;">${data.positive} (${positivePercent}%)</span>
-                            </div>
-                            <div style="background: rgba(0, 0, 0, 0.3); border-radius: 4px; height: 6px; overflow: hidden;">
-                                <div style="background: #00ff88; height: 100%; width: ${positivePercent}%;"></div>
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: #ff4444; font-size: 0.9rem;">Negative</span>
-                                <span style="color: #ff4444; font-weight: 600;">${data.negative} (${negativePercent}%)</span>
-                            </div>
-                            <div style="background: rgba(0, 0, 0, 0.3); border-radius: 4px; height: 6px; overflow: hidden;">
-                                <div style="background: #ff4444; height: 100%; width: ${negativePercent}%;"></div>
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: #ffffff; font-size: 0.9rem;">Neutral</span>
-                                <span style="color: #ffffff; font-weight: 600;">${data.neutral} (${neutralPercent}%)</span>
-                            </div>
-                            <div style="background: rgba(0, 0, 0, 0.3); border-radius: 4px; height: 6px; overflow: hidden;">
-                                <div style="background: #ffffff; height: 100%; width: ${neutralPercent}%;"></div>
-                            </div>
-                        </div>
-                        <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px; margin-top: 8px;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="color: #cccccc; font-size: 0.9rem;">Total</span>
-                                <span style="color: #cccccc; font-weight: 600;">${data.total}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Event listeners for trends
-        refreshTrendsBtn.addEventListener('click', loadTrendsAnalysis);
 
         // Debounce function for search
         function debounce(func, wait) {
@@ -1657,10 +1493,18 @@
             };
         }
 
-        // Load headlines and trends on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadHeadlines();
-            loadTrendsAnalysis();
+        // Load headlines on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('DOM loaded, starting application...');
+            console.log('API Base URL:', API_BASE_URL);
+            console.log('Elements found:');
+            console.log('- totalCountElement:', totalCountElement);
+            console.log('- showingCount:', showingCount);
+            console.log('- sourceFilter:', sourceFilter);
+            
+            // Load headlines and populate source filter
+            await loadHeadlines();
+            await updateSourceFilterAll();
         });
     </script>
 </body>
