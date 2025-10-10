@@ -65,19 +65,16 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Failed to create tables: {e}")
 
-#Import Pydantic models from schema.py
+# Import Pydantic models from schema.py
 from .schema import HeadlineRequest, SentimentResponse, HeadlineCreate, HeadlinesResponse, HeadlineOut
 from .db import get_db, Base, engine
 from .db_models import Headline
 from .scraper_service import ScraperService
+from .models import analyze_headline_sentiment
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
+from datetime import datetime
 
-# Define POST /analyze endpoint:
-#   - Accepts request with headline
-#   - Calls sentiment prediction function (stub for now)
-#   - Generates simple commentary (stub for now)
-#   - Returns response with sentiment and commentary
 @app.post("/analyze", response_model=SentimentResponse)
 async def analyze_sentiment(request: HeadlineRequest):
     """
@@ -90,7 +87,6 @@ async def analyze_sentiment(request: HeadlineRequest):
         SentimentResponse with sentiment analysis results
     """
     try:
-        # For now, let's create a simple rule-based sentiment analyzer
         sentiment, commentary = analyze_headline_sentiment(request.headline)
         
         return SentimentResponse(
@@ -100,9 +96,6 @@ async def analyze_sentiment(request: HeadlineRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
-# Import sentiment analysis function from models.py
-from .models import analyze_headline_sentiment
-
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
@@ -111,10 +104,10 @@ FRONTEND_DIR = PROJECT_ROOT / "frontend"
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
-# Serve the React frontend
+# Serve the frontend
 @app.get("/")
 async def serve_frontend():
-    """Serve the React frontend."""
+    """Serve the frontend application."""
     frontend_path = FRONTEND_DIR / "index.html"
     if frontend_path.exists():
         return FileResponse(str(frontend_path))
@@ -136,13 +129,11 @@ if __name__ == "__main__":
         log_level=log_level.lower()
     )
 
-
 # Headlines storage and retrieval APIs
 
 @app.post("/headlines", response_model=HeadlineOut)
 def create_headline(headline: HeadlineCreate, db: Session = Depends(get_db)):
     try:
-        from .models import analyze_headline_sentiment
         sentiment, commentary = analyze_headline_sentiment(headline.title)
     except Exception as e:
         sentiment, commentary = None, f"Analysis failed: {e}"
@@ -181,14 +172,12 @@ def list_headlines(
     if sentiment:
         stmt = stmt.where(Headline.sentiment == sentiment)
     if start_date:
-        from datetime import datetime
         try:
             dt = datetime.fromisoformat(start_date)
             stmt = stmt.where(Headline.published_at >= dt)
         except Exception:
             raise HTTPException(status_code=400, detail="Invalid start_date")
     if end_date:
-        from datetime import datetime
         try:
             dt = datetime.fromisoformat(end_date)
             stmt = stmt.where(Headline.published_at <= dt)
