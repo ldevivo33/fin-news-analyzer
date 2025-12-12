@@ -44,6 +44,7 @@ The application is currently deployed on AWS EC2 with the following production s
 - **Performance**: Optimized for up to 100K+ headlines with good response times
 
 ## What's Next?
+IMMINENT : Docker filing, basic CI CD, caching features 
 
 I am currently working on the following features and will ship ASAP:
 - Advanced filtering and search capabilities
