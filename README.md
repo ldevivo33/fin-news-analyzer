@@ -9,11 +9,14 @@ A FastAPI-based web service that analyzes the sentiment of financial news headli
 - Backend: FastAPI, Pydantic, SQLAlchemy 2.x, SQLite
 - ML: PyTorch, Transformers (FinBERT)
 - Frontend: Vanilla HTML/CSS/JavaScript
+- CI/CD: GitHub Actions (lint + test)
+- Testing: pytest, ruff
 
 ## How It Works
 - Advanced AI (FinBERT) used for sentiment; falls back to a financial keyword-based analyzer if model loading fails.
 - Confidence scoring included in commentary.
 - Headlines can be stored in a SQLite DB for retrieval and filtering.
+- LRU caching on inference reduces latency for repeated headlines.
 
 ## Deployment
 
@@ -44,12 +47,9 @@ The application is currently deployed on AWS EC2 with the following production s
 - **Performance**: Optimized for up to 100K+ headlines with good response times
 
 ## What's Next?
-IMMINENT : Docker filing, basic CI CD, caching features 
 
-I am currently working on the following features and will ship ASAP:
+Potential future enhancements:
 - Advanced filtering and search capabilities
-- Historical Trend Analysis
-- PostgresSQL for cloud native database
-- Further Docker wrapping
-- CI/CD configuration
-- Unit Testing
+- Historical trend analysis
+- PostgreSQL for cloud-native database
+- Docker Compose production setup

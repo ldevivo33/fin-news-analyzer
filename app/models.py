@@ -1,6 +1,7 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from typing import Tuple, Optional
+from functools import lru_cache
 import logging
 
 # Set up logging
@@ -212,21 +213,25 @@ def get_analyzer() -> FinancialSentimentAnalyzer:
         _analyzer_instance = FinancialSentimentAnalyzer()
     return _analyzer_instance
 
+@lru_cache(maxsize=1024)
 def analyze_headline_sentiment(headline: str) -> tuple[str, str]:
     """
     Analyze financial headline sentiment using the advanced model.
-    
+
+    Results are cached (LRU, max 1024 entries) to reduce inference latency
+    for repeated headlines.
+
     Args:
         headline: Financial news headline to analyze
-        
+
     Returns:
         Tuple of (sentiment, commentary)
     """
     analyzer = get_analyzer()
     sentiment, commentary, confidence = analyzer.predict_sentiment(headline)
-    
+
     # Add confidence to commentary
     confidence_percent = round(confidence * 100, 1)
     commentary += f" (Model confidence: {confidence_percent}%)"
-    
+
     return sentiment, commentary

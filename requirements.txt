@@ -15,3 +15,9 @@ python-dotenv>=1.0.0
 psycopg2-binary>=2.9.0
 PyMySQL>=1.0.0
 gunicorn>=21.0.0
+
+# Testing and linting
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+httpx>=0.24.0
+ruff>=0.1.0

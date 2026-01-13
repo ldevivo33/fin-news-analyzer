@@ -1,0 +1,30 @@
+[project]
+name = "fin-news-analyzer"
+version = "1.0.0"
+description = "Financial News Sentiment Analyzer using FinBERT"
+requires-python = ">=3.10"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults (FastAPI uses this)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B"]  # Allow some bugbear rules in tests
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+asyncio_mode = "auto"
