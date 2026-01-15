@@ -129,14 +129,14 @@ class FinancialSentimentAnalyzer:
             # Strong negative indicators (weight 2)
             'crash': 2, 'plunge': 2, 'collapse': 2, 'meltdown': 2, 'disaster': 2,
             'crisis': 2, 'recession': 2, 'depression': 2, 'catastrophe': 2, 'devastating': 2,
-            'crash': 2, 'tank': 2, 'nosedive': 2, 'freefall': 2, 'implode': 2,
+            'tank': 2, 'nosedive': 2, 'freefall': 2, 'implode': 2,
             'failure': 2, 'breakdown': 2, 'ruin': 2, 'destroy': 2, 'shatter': 2,
             # Moderate negative indicators (weight 1)
             'fall': 1, 'drop': 1, 'decline': 1, 'down': 1, 'negative': 1, 'weak': 1,
             'miss': 1, 'loss': 1, 'bearish': 1, 'slump': 1, 'dip': 1, 'decrease': 1,
             'concern': 1, 'risk': 1, 'worry': 1, 'fear': 1, 'uncertainty': 1,
             'volatility': 1, 'turbulence': 1, 'pessimistic': 1, 'disappoint': 1,
-            'struggle': 1, 'suffer': 1, 'bleed': 1, 'bleeding': 1, 'bleed': 1
+            'struggle': 1, 'suffer': 1, 'bleed': 1, 'bleeding': 1
         }
         
         # Calculate weighted scores

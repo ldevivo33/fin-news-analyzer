@@ -1,15 +1,22 @@
-# Import FastAPI and Pydantic modules 
+# Import FastAPI and Pydantic modules
 from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional
+from sqlalchemy.orm import Session
+from sqlalchemy import select, func
+from datetime import datetime
 import uvicorn
 import logging
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+
+from .schema import HeadlineRequest, SentimentResponse, HeadlineCreate, HeadlinesResponse, HeadlineOut
+from .db import get_db, Base, engine
+from .db_models import Headline
+from .scraper_service import ScraperService
+from .models import analyze_headline_sentiment, get_analyzer
 
 # Load environment variables from .env file
 load_dotenv()
@@ -52,8 +59,7 @@ async def startup_event():
     """Preload the sentiment analysis model at startup."""
     logger.info("Starting up Financial News Sentiment Analyzer...")
     try:
-        from .models import get_analyzer
-        analyzer = get_analyzer()
+        get_analyzer()  # Preload the model
         logger.info("Model preloaded successfully!")
     except Exception as e:
         logger.error(f"Failed to preload model: {e}")
@@ -64,16 +70,6 @@ async def startup_event():
         logger.info("Database tables ensured.")
     except Exception as e:
         logger.error(f"Failed to create tables: {e}")
-
-# Import Pydantic models from schema.py
-from .schema import HeadlineRequest, SentimentResponse, HeadlineCreate, HeadlinesResponse, HeadlineOut
-from .db import get_db, Base, engine
-from .db_models import Headline
-from .scraper_service import ScraperService
-from .models import analyze_headline_sentiment
-from sqlalchemy.orm import Session
-from sqlalchemy import select, func
-from datetime import datetime
 
 @app.post("/analyze", response_model=SentimentResponse)
 async def analyze_sentiment(request: HeadlineRequest):
@@ -94,7 +90,7 @@ async def analyze_sentiment(request: HeadlineRequest):
             commentary=commentary
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}") from e
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -175,14 +171,14 @@ def list_headlines(
         try:
             dt = datetime.fromisoformat(start_date)
             stmt = stmt.where(Headline.published_at >= dt)
-        except Exception:
-            raise HTTPException(status_code=400, detail="Invalid start_date")
+        except Exception as e:
+            raise HTTPException(status_code=400, detail="Invalid start_date") from e
     if end_date:
         try:
             dt = datetime.fromisoformat(end_date)
             stmt = stmt.where(Headline.published_at <= dt)
-        except Exception:
-            raise HTTPException(status_code=400, detail="Invalid end_date")
+        except Exception as e:
+            raise HTTPException(status_code=400, detail="Invalid end_date") from e
     if q:
         stmt = stmt.where(Headline.title.ilike(f"%{q}%"))
 
@@ -239,7 +235,7 @@ def clear_all_headlines(db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error clearing headlines: {e}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to clear headlines: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear headlines: {str(e)}") from e
 
 
 # Scraping endpoints
@@ -274,7 +270,7 @@ async def scrape_headlines(
         
     except Exception as e:
         logger.error(f"Error in scrape endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Scraping failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Scraping failed: {str(e)}") from e
 
 
 @app.post("/scrape/all")
@@ -312,7 +308,7 @@ async def scrape_all_sources(
         
     except Exception as e:
         logger.error(f"Error in scrape all endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Scraping failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Scraping failed: {str(e)}") from e
 
 
 @app.get("/scrape/stats")
@@ -329,7 +325,7 @@ def get_scraping_stats(db: Session = Depends(get_db)):
         
     except Exception as e:
         logger.error(f"Error getting scraping stats: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}") from e
 
 
 @app.get("/scrape/recent")
@@ -350,4 +346,4 @@ def get_recent_scraped_headlines(
         
     except Exception as e:
         logger.error(f"Error getting recent headlines: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get recent headlines: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get recent headlines: {str(e)}") from e
