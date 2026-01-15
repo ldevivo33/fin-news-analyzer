@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase, scoped_session
 import os
-from pathlib import Path
 
 
 # Database configuration with environment variable support

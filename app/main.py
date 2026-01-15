@@ -228,7 +228,7 @@ def clear_all_headlines(db: Session = Depends(get_db)):
         db.commit()
         
         return {
-            "message": f"All headlines cleared successfully",
+            "message": "All headlines cleared successfully",
             "deleted_count": total_count
         }
         

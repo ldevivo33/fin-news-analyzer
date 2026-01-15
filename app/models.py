@@ -1,6 +1,6 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from typing import Tuple, Optional
+from typing import Tuple
 from functools import lru_cache
 import logging
 
