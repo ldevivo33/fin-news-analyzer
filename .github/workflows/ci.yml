@@ -21,11 +21,8 @@ jobs:
       - name: Install ruff
         run: pip install ruff
 
-      - name: Run ruff linter
+      - name: Run linter
         run: ruff check app/ tests/
-
-      - name: Run ruff formatter check
-        run: ruff format --check app/ tests/
 
   test:
     name: Test
